@@ -1,0 +1,273 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "mount_file_id": "1JVwyWMrCp19kJwELDYWBFOLM3mbMaSt_",
+      "authorship_tag": "ABX9TyN3WLrjI0KBtT/UViES9O0c",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Penpitcha0634/BSC_DPDM23-1/blob/main/project2-Cluster%20Analysis\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Tzqmct_CFT-a"
+      },
+      "outputs": [],
+      "source": [
+        "from scipy.cluster.hierarchy import linkage, fcluster, dendrogram\n",
+        "from sklearn.metrics import silhouette_samples, silhouette_score\n",
+        "import matplotlib.pyplot as plt\n",
+        "import numpy as np"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd"
+      ],
+      "metadata": {
+        "id": "dd8PQxs1JnV-"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "IThB66pLJwj_",
+        "outputId": "4716aad8-3b83-4bff-dbde-fd4cd0527125"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(\"/content/drive\", force_remount=True).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Air_pollution = pd.read_excel('/content/drive/MyDrive/seminar & project /Project/project2/Data Set ตัวแปรและปัจจัยมลพิษทางอากาศ .xlsx',\n",
+        "                              header = None, names='มลพิษของแท้')# ระบุเส้นทางของไฟล์ Excel\n",
+        "sheet_name = 'มลพิษของแท้'# ระบุชื่อ Sheet ที่ต้องการ\n",
+        "Air_pollution = pd.read_excel(file_path, sheet_name=sheet_name)"
+      ],
+      "metadata": {
+        "id": "zG__R8SDRE74"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# แสดงข้อมูล\n",
+        "print(Air_pollution)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "SjeX4Fo8Wt2v",
+        "outputId": "e97ab3c7-eba8-4924-a80c-99d670a32145"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "         จังหวัด SO2 NO2    CO  O3 PM10 PM2.5  จำนวน\\nโรงงาน  \\\n",
+            "0         กระบี่   -   -     -   -    0     -           2163   \n",
+            "1      กาญจนบุรี   0   4     -  36   41    15           6306   \n",
+            "2      กาฬสินธุ์   -   -     -   -    -     -           5599   \n",
+            "3    \\tกำแพงเพชร   1   6  0.43  18   25    13           3307   \n",
+            "4      \\tขอนแก่น   -   -     -   -   48    28          11674   \n",
+            "..           ...  ..  ..   ...  ..  ...   ...            ...   \n",
+            "71  \\tอำนาจเจริญ   -   -     -   -    -     -           1231   \n",
+            "72      อุดรธานี   1   6  0.64  24   31    19          10661   \n",
+            "73     อุตรดิตถ์   0   7  0.35  24   41    23           1651   \n",
+            "74     อุทัยธานี   0   8  0.39  23   34    18           1065   \n",
+            "75   อุบลราชธานี   3   6   0.3  27   32    19          10625   \n",
+            "\n",
+            "    ปริมาณกาก\\nของเสีย  จำนวน\\nครัวเรือน  ... ฤดูฝน ฤดูหนาว  \\\n",
+            "0               213.02            201080  ...  27.6      27   \n",
+            "1            605710.18            359348  ...  28.3    26.4   \n",
+            "2            903434.95            322190  ...  28.2      25   \n",
+            "3             76728.47            285190  ...  28.4    26.1   \n",
+            "4            118002.81            668539  ...  28.2    25.1   \n",
+            "..                 ...               ...  ...   ...     ...   \n",
+            "71           371602.59            125118  ...  27.3    24.3   \n",
+            "72             2760.01            548525  ...  28.4    25.1   \n",
+            "73              148.67            175738  ...    29    26.4   \n",
+            "74              155.70            129514  ...  29.1    27.1   \n",
+            "75           176222.76            642015  ...  28.1    25.6   \n",
+            "\n",
+            "   ปริมาณการใช้\\nไฟฟ้าครัวเรือน ปริมาณการใช้\\nไฟฟ้ากิจการ  \\\n",
+            "0                     346833979                 480646937   \n",
+            "1                     645373570                1332767206   \n",
+            "2                     383804304                 453890163   \n",
+            "3                     396833854                 658647531   \n",
+            "4                     996720930                1553089742   \n",
+            "..                          ...                       ...   \n",
+            "71                    127969544                 141571456   \n",
+            "72                            -                         -   \n",
+            "73                    259438532                 224260983   \n",
+            "74                    193761157                 149897721   \n",
+            "75                    791639963                 894630096   \n",
+            "\n",
+            "   ปริมาณน้ำมันที่ใช้\\nกับยานพาหนะ จำนวนรถตาม\\nกฎหมายรถยนต์  \\\n",
+            "0                        211316.80                  1265888   \n",
+            "1                        389608.80                  1974241   \n",
+            "2                        180626.15                  1487255   \n",
+            "3                        194569.75                  1783491   \n",
+            "4                        828250.69                  4375122   \n",
+            "..                             ...                      ...   \n",
+            "71                        79757.80                   646113   \n",
+            "72                       755528.11                  3498893   \n",
+            "73                       117704.91                  1318596   \n",
+            "74                        73365.20                   892109   \n",
+            "75                       408692.16                  3789170   \n",
+            "\n",
+            "    จำนวนรถตาม\\nกฎหมายขนส่งทางบก  ปริมาณขยะมูลฝอย\\nที่เกิดขึ้น  \\\n",
+            "0                          37108                           495   \n",
+            "1                          99541                           657   \n",
+            "2                          66852                           735   \n",
+            "3                          97924                           514   \n",
+            "4                         151909                          1348   \n",
+            "..                           ...                           ...   \n",
+            "71                         18494                           363   \n",
+            "72                        117679                          1368   \n",
+            "73                         32805                           423   \n",
+            "74                         36778                           243   \n",
+            "75                        109222                          1654   \n",
+            "\n",
+            "    ปริมาณขยะมูลฝอย\\nตกค้าง  ปริมาณพื้นที่\\nสีเขียว  \n",
+            "0                     58280                   10.78  \n",
+            "1                    109475                  525.13  \n",
+            "2                     90050                   42.18  \n",
+            "3                     20000                   11.34  \n",
+            "4                    618640                 1403.73  \n",
+            "..                      ...                     ...  \n",
+            "71                   110500                   77.48  \n",
+            "72                     1570                  655.43  \n",
+            "73                     1570                   45.11  \n",
+            "74                     1000                       -  \n",
+            "75                     8000                   14.69  \n",
+            "\n",
+            "[76 rows x 22 columns]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# การจัดกลุ่มแบบลำดับชั้น (Hierarchical Clustering)\n",
+        "# สร้าง linkage matrix\n",
+        "linkage_matrix = linkage(X, method='ward')  # ใช้ Ward's Method\n"
+      ],
+      "metadata": {
+        "id": "b5nfDFkdFnPB"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# กำหนดจำนวนกลุ่ม (สมมุติ 3 กลุ่ม)\n",
+        "n_clusters = 3\n",
+        "clusters = fcluster(linkage_matrix, n_clusters, criterion='maxclust')"
+      ],
+      "metadata": {
+        "id": "h6U7HZSUFq3r"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# คำนวณค่า Silhouette\n",
+        "silhouette_vals = silhouette_samples(X, clusters)\n",
+        "silhouette_avg = silhouette_score(X, clusters)"
+      ],
+      "metadata": {
+        "id": "WZTsCBLqFvTb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# สร้างกราฟ Silhouette\n",
+        "plt.figure(figsize=(8, 6))\n",
+        "y_lower = 10\n",
+        "for i in range(1, n_clusters + 1):\n",
+        "    cluster_silhouette_vals = silhouette_vals[clusters == i]\n",
+        "    cluster_silhouette_vals.sort()\n",
+        "    y_upper = y_lower + len(cluster_silhouette_vals)\n",
+        "    plt.fill_betweenx(np.arange(y_lower, y_upper), 0, cluster_silhouette_vals, alpha=0.7)\n",
+        "    plt.text(-0.05, y_lower + 0.5 * len(cluster_silhouette_vals), f\"Cluster {i}\")\n",
+        "    y_lower = y_upper + 10"
+      ],
+      "metadata": {
+        "id": "yPV7YZ4qI94Y"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# เส้นค่าเฉลี่ย Silhouette\n",
+        "plt.axvline(silhouette_avg, color=\"red\", linestyle=\"--\", label=f\"Average Silhouette: {silhouette_avg:.2f}\")\n",
+        "plt.title(\"Silhouette Plot for Hierarchical Clustering\")\n",
+        "plt.xlabel(\"Silhouette Coefficient\")\n",
+        "plt.ylabel(\"Cluster\")\n",
+        "plt.legend()\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "awaXOt79I-uT"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
